@@ -8,8 +8,6 @@ import torchvision
 import torch.nn as nn
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-
-
 class ResidualBlock(nn.Module):
     def __init__(self, in_channels, kernel_size):
         super(ResidualBlock, self).__init__()
@@ -27,10 +25,9 @@ class ResidualBlock(nn.Module):
     def forward(self, x):
         out = self.main(x)
         return x + out
-
-    
+        
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, norm_type='batch_norm'):
         super(Generator, self).__init__()
         self.main = nn.Sequential(
             nn.ReflectionPad2d(3),
@@ -67,7 +64,7 @@ class Generator(nn.Module):
         return self.main(x)
     
 class Generator_small(nn.Module):
-    def __init__(self):
+    def __init__(self, norm_type='batch_norm'):
         super(Generator_small, self).__init__()
         self.main = nn.Sequential(
             nn.ReflectionPad2d(3),
