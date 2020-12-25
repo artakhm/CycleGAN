@@ -15,7 +15,7 @@ from os import listdir
 from os.path import isfile, join
 from load_datasets import edges2shoes, horses2zebras
 from model import Discriminator, Generator_small, Generator
-from train import train, train_usual, visualize
+from train import train, visualize
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -36,56 +36,53 @@ with zipfile.ZipFile('edges2shoes-dataset.zip', 'r') as zip_ref:
     zip_ref.extractall('/datasets')
 
 
-transform = torchvision.transforms.Compose([
-#                                    torchvision.transforms.CenterCrop(100)
-#                                     torchvision.transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+transform1 = transforms.Compose([
+                                    transforms.RandomApply([
+                                        transforms.RandomCrop(128, padding=28),
+                                        transforms.RandomRotation(5),
+                                        transforms.RandomRotation(10),
+#                                         transforms.RandomRotation(20),
+                                    ], p=0.5),
+                                    transforms.RandomHorizontalFlip(p=0.5),
+                                    transforms.ToTensor(),
+                                    transforms.RandomErasing(0.5, scale=(0.02, 0.2)),
+                                    transforms.Normalize((0.527074  , 0.5192849 , 0.45850393), (0.1926276 , 0.19553232, 0.21085525))
                                ])
+unnorm_horse = UnNormalize((0.527074  , 0.5192849 , 0.45850393), (0.1926276 , 0.19553232, 0.21085525))
 
-dataset = edges2shoes('datasets/edges2shoes-dataset/metadata.csv', 'datasets/edges2shoes-dataset', transform)
-dataset_ = horses2zebras('datasets/horse2zebra')
+
+transform2 = torchvision.transforms.Compose([
+                                  transforms.RandomApply([
+                                        transforms.RandomCrop(128, padding=28),
+                                        transforms.RandomRotation(5),
+                                        transforms.RandomRotation(10),
+#                                         transforms.RandomRotation(20),
+                                    ], p=0.5),
+                                    transforms.RandomHorizontalFlip(p=0.5),
+                                    transforms.ToTensor(),
+                                    transforms.RandomErasing(0.5, scale=(0.02, 0.2)),
+                                    transforms.Normalize((0.4834474, 0.4674779, 0.3979212), (0.2078747 , 0.20117787, 0.19642662))
+                                ])
+
+unnorm_zebra = UnNormalize((0.4834474, 0.4674779, 0.3979212), (0.2078747 , 0.20117787, 0.19642662))
+
+dataset_ = horses2zebras('../input/horse2zebra/horse2zebra', transform1, transform2)
 
 BATCH_SIZE = 16
-VAL_SIZE = 4000
+VAL_SIZE = 50
 
-train_set, test_set = torch.utils.data.random_split(dataset, [dataset.__len__()-VAL_SIZE,VAL_SIZE])
-trainloader = DataLoader(dataset = train_set, batch_size = BATCH_SIZE, shuffle = True)
-
-# #train only generators
-# Gx = Generator().to(device)
-# Gy = Generator().to(device)
-
-# train_usual(Gx, Gy, lr=0.0002,epochs=5, trainloader batch_size=BATCH_SIZE)
-
-# visualize(Gx, Gy, train_set)
-
-# #save model
-# torch.save(Gx.state_dict(), './gx.pth')
-# torch.save(Gy.state_dict(), './gy.pth')
-
-
-# #load model
-# modelx = Generator()
-# modelx.load_state_dict(torch.load('./gx.pth'))
-# modelx.eval()
-# modely = Generator()
-# modely.load_state_dict(torch.load('./gy.pth'))
-# modely.eval()
-
-
-# visualize(modelx.to(device), modely.to(device), train_set)
-
-
+train_set, test_set = torch.utils.data.random_split(dataset, [dataset_.__len__()-VAL_SIZE,VAL_SIZE])
+trainloader = DataLoader(dataset_ = train_set, batch_size = BATCH_SIZE, shuffle = True)
 
 # Dx = Discriminator().to(device)
 # Dy = Discriminator().to(device)
 # Gx = Generator_small().to(device)
 # Gy = Generator_small().to(device)
 
-
 # #train gan
-# train(Dx,Dy,Gx, Gy, lr=0.0002,N_EPOCHS=4)
+# train(Dx,Dy,Gx, Gy, trainloader=trainloader, lr=0.0002,N_EPOCHS=25)
 
-# visualize(Gx, Gy, test_set)
+# visualize(Gx, Gy, test_set, unnorm_horse, unnorm_zebra)
 
 # torch.save(Gx.state_dict(), './gx_adv.pth')
 # torch.save(Gy.state_dict(), './gy_adv.pth')
