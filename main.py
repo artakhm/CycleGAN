@@ -13,7 +13,7 @@ from skimage import io
 import torch.nn.functional as F
 from os import listdir
 from os.path import isfile, join
-from load_datasets import edges2shoes, horses2zebras
+from load_datasets import edges2shoes, horses2zebras, UnNormalize
 from model import Discriminator, Generator_small, Generator
 from train import train, visualize
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
